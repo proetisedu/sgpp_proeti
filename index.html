@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGPP - Sistema de Gestão de Planos do PROETI</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+
+    <main id="tela-inicial" class="container">
+        <header class="header">
+            <h1 class="system-title">SGPP - Sistema de Gestão de Planos do PROETI</h1>
+            <hr class="header-line">
+        </header>
+        <div class="welcome-box">
+            <p>
+                Bem vindo(a) ao Sistema de Gestão de Planos. Clique no botão abaixo para começar a preencher os dados para a terceira parcela do edital 001/2023 e gerar o seu plano.
+            </p>
+        </div>
+        <button id="btn-criar-plano" class="btn btn-primary btn-large">Clique para criar plano</button>
+    </main>
+
+    <main id="tela-gerenciamento" class="container tela-oculta">
+        <header class="header">
+            <h1 class="system-title">SGPP - Sistema de Gestão de Planos do PROETI</h1>
+            <hr class="header-line">
+        </header>
+
+        <section class="content-box">
+            <button id="btn-home" class="btn btn-home">Home</button>
+            <h2 class="section-title">Informações do Edital 001/2023</h2>
+            <div class="info-box">
+                <p>
+                    Aqui você irá preencher os dados do município, a quantidade de matrículas por escola e o plano de aplicação financeira para da terceira parcela.
+                </p>
+            </div>
+            <button id="btn-iniciar-edital" class="btn btn-primary btn-large">Iniciar Preenchimento</button>
+        </section>
+    </main>
+
+    <section id="sub-tela-edital" class="tela-oculta">
+    </section>
+
+    <section id="sub-tela-planejamento" class="tela-oculta container">
+        <header class="header">
+            <h1 class="system-title">SGPP - Sistema de Gestão de Planos do PROETI</h1>
+            <hr class="header-line">
+        </header>
+        <div class="info-box">
+            <p>
+                Aqui você vai criar os seus planos de custeio e capital, depois vai clicar em Gerar PDFs para gerar os documentos para enviar por e-docs.
+            </p>
+        </div>
+        <div id="opcoes-botoes" class="opcoes-botoes"></div>
+        <button id="btn-gerar-pdf" class="btn btn-primary btn-large" disabled>Gerar PDFs</button>
+        <button id="btn-recomecar" class="btn btn-secondary btn-large">Começar Novamente</button>
+        <button id="btn-resetar-plano" class="btn btn-secondary btn-large">Resetar Plano Inserido</button>
+    </section>
+
+    <section id="tela-planejamento-custeio" class="tela-oculta">
+        <h2>Planejamento de Custeio</h2>
+        <div class="info-box">
+            <p class="restante-info">Valor restante: <span id="valor-custeio-restante"></span></p>
+            <p>Valor a ser planejado: <span id="valor-custeio-total"></span></p>
+        </div>
+        <form id="form-custeio"></form>
+        <button id="btn-salvar-custeio" class="btn btn-primary">Salvar Custeio</button>
+        <button id="btn-voltar-custeio" class="btn btn-secondary">Voltar</button>
+    </section>
+
+    <section id="tela-planejamento-capital" class="tela-oculta">
+        <h2>Planejamento de Capital</h2>
+        <div class="info-box">
+            <p class="restante-info">Valor restante: <span id="valor-capital-restante"></span></p>
+            <p>Valor a ser planejado: <span id="valor-capital-total"></span></p>
+        </div>
+        <form id="form-capital"></form>
+        <button id="btn-salvar-capital" class="btn btn-primary">Salvar Capital</button>
+        <button id="btn-voltar-capital" class="btn btn-secondary">Voltar</button>
+    </section>
+
+    <div id="form-modal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Informações do Município</h2>
+            <div class="form-group">
+                <label for="municipio">Município:</label>
+                <select id="municipio"></select>
+            </div>
+            <div class="form-group">
+                <label for="prefeito">Prefeito(a):</label>
+                <input type="text" id="prefeito">
+            </div>
+            <div class="modal-buttons">
+                <button id="btn-salvar-municipio" class="btn btn-primary">Salvar</button>
+                <button id="btn-sair-municipio" class="btn btn-secondary">Sair</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="matriculas-modal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Edital 001/2023 - Matrículas 2025</h2>
+            <div class="form-group">
+                <label for="escola">Escola:</label>
+                <select id="escola"></select>
+            </div>
+            <div class="form-group">
+                <label for="quantidade-matriculas">Quantidade de Matrículas:</label>
+                <input type="number" id="quantidade-matriculas">
+            </div>
+            <div class="modal-buttons">
+                <button id="btn-inserir-escola" class="btn btn-primary">Inserir Escola</button>
+                <button id="btn-excluir-escola" class="btn btn-secondary">Excluir Escola</button>
+            </div>
+            <div id="escolas-inseridas"></div>
+            <div class="modal-buttons">
+                <button id="btn-salvar-tudo" class="btn btn-primary">Salvar Tudo</button>
+                <button id="btn-cancelar" class="btn btn-secondary">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="plano-modal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Planejamento Financeiro</h2>
+            <p>Valor a ser planejado: <span id="valor-planejado">R$ 0,00</span></p>
+            <div class="form-group">
+                <label for="valor-custeio">Valor para Custeio:</label>
+                <input type="number" id="valor-custeio" step="0.01">
+            </div>
+            <div class="form-group">
+                <label for="valor-capital">Valor para Capital:</label>
+                <input type="number" id="valor-capital" step="0.01">
+            </div>
+            <div class="modal-buttons">
+                <button id="btn-salvar-plano" class="btn btn-primary">Salvar Plano</button>
+                <button id="btn-cancelar-plano" class="btn btn-secondary">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+
+</body>
+</html>

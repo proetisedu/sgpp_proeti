@@ -63,6 +63,8 @@ let valorCusteioSalvo = 0;
 let valorCapitalSalvo = 0;
 let planoCusteio = [];
 let planoCapital = [];
+// NOVO: URL do Apps Script que vai receber os dados - ATUALIZE ESTA URL
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz2if0zgRxuuIb1kR79-fPf9ogLTqVphM7qsEhC0s9Xb-jgVP3whLrN3w0Qqro_0cyQ/exec';
 const VALOR_POR_MATRICULA = 3000;
 
 // Objeto com o limite de matrículas por município
@@ -244,7 +246,14 @@ function carregarEscolas(nomeMunicipio = null) {
 
     selectEscola.innerHTML = '<option value="">Selecione a escola</option>';
     if (municipioSelecionado) {
-        municipioSelecionado.escolas.forEach(escola => {
+        // CORREÇÃO ANTERIOR (Problema 1): Filtrar escolas já inseridas (evitar duplicidade)
+        const escolasSalvasNomes = matriculasSalvas.map(item => item.escola);
+        
+        const escolasDisponiveis = municipioSelecionado.escolas.filter(escola => 
+            !escolasSalvasNomes.includes(escola)
+        );
+
+        escolasDisponiveis.forEach(escola => {
             const option = document.createElement('option');
             option.value = escola;
             option.textContent = escola;
@@ -283,11 +292,6 @@ btnHome.addEventListener('click', () => {
     mostrarTelaInicial();
 });
 
-// REMOVIDO: O botão 'Voltar para o Início' foi removido
-// btnHomePlanejamento.addEventListener('click', () => {
-//     mostrarTelaInicial();
-// });
-
 btnIniciarEdital.addEventListener('click', () => {
     if (!municipioAtual || !prefeitoAtual) {
         abrirFormulario(formModal);
@@ -321,25 +325,35 @@ btnSairMunicipio.addEventListener('click', () => {
 });
 
 selectMunicipio.addEventListener('change', () => {
+    // Ao mudar o município, limpa as matrículas salvas para evitar erro de estado
+    matriculasSalvas = [];
+    exibirMatriculasSalvas();
     carregarEscolas();
     municipioAtual = selectMunicipio.value;
 });
 
 btnInserirEscola.addEventListener('click', () => {
     const escolaSelecionada = selectEscola.value;
-    const quantidadeMatriculas = document.getElementById('quantidade-matriculas').value;
+    // Pega o valor como string para validar se não é vazio
+    const quantidadeMatriculasStr = document.getElementById('quantidade-matriculas').value; 
+    const quantidadeMatriculas = parseInt(quantidadeMatriculasStr);
 
-    if (escolaSelecionada && quantidadeMatriculas && quantidadeMatriculas > 0) {
+    // CORREÇÃO ANTERIOR (Problema 3): Permite 0, mas verifica se não é string vazia e se é >= 0
+    if (escolaSelecionada && quantidadeMatriculasStr !== '' && quantidadeMatriculas >= 0) {
+        
         const dadosEscola = {
             escola: escolaSelecionada,
-            matriculas: parseInt(quantidadeMatriculas)
+            matriculas: quantidadeMatriculas
         };
         matriculasSalvas.push(dadosEscola);
         selectEscola.value = '';
         document.getElementById('quantidade-matriculas').value = '';
         exibirMatriculasSalvas();
+        
+        // CORREÇÃO ANTERIOR (Problema 1): Recarrega a lista para remover a escola inserida
+        carregarEscolas(municipioAtual); 
     } else {
-        alert('Por favor, selecione uma escola e digite uma quantidade de matrículas válida.');
+        alert('Por favor, selecione uma escola e digite uma quantidade de matrículas válida (0 ou mais).');
     }
 });
 
@@ -357,6 +371,9 @@ btnExcluirEscola.addEventListener('click', () => {
         const index = itemSelecionado.dataset.index;
         matriculasSalvas.splice(index, 1);
         exibirMatriculasSalvas();
+        
+        // CORREÇÃO ANTERIOR (Problema 1): Recarrega a lista para adicionar a escola de volta ao select
+        carregarEscolas(municipioAtual); 
     } else {
         alert('Por favor, selecione um item da lista para excluir.');
     }
@@ -367,6 +384,17 @@ btnCancelar.addEventListener('click', () => {
 });
 
 btnSalvarTudo.addEventListener('click', () => {
+    // 1. Encontrar o total de escolas que o município deveria ter preenchido
+    const municipioInfo = municipiosData.find(m => m.nome === municipioAtual);
+    const totalEscolasMunicipio = municipioInfo ? municipioInfo.escolas.length : 0;
+
+    // CORREÇÃO ANTERIOR (Problema 2): Checagem se todas as escolas foram preenchidas
+    if (matriculasSalvas.length !== totalEscolasMunicipio) {
+        alert(`Você deve preencher as matrículas para TODAS as ${totalEscolasMunicipio} escolas do município. Você preencheu apenas ${matriculasSalvas.length}.`);
+        return; // Sai da função se a checagem falhar
+    }
+
+    // Se a validação do Problema 2 passou, o resto do código original pode ser executado.
     if (matriculasSalvas.length > 0) {
         const totalMatriculas = matriculasSalvas.reduce((soma, item) => soma + item.matriculas, 0);
         let matriculasParaCalculo = 0;
@@ -400,29 +428,8 @@ btnSalvarTudo.addEventListener('click', () => {
         }
 
     } else {
+        // Este else só será atingido se totalEscolasMunicipio for 0, mas é uma segurança.
         alert('Por favor, adicione pelo menos uma escola.');
-    }
-});
-
-btnCancelarPlano.addEventListener('click', () => {
-    fecharFormulario(planoModal);
-    abrirFormulario(matriculasModal);
-});
-
-btnSalvarPlano.addEventListener('click', () => {
-    const valorCusteio = parseFloat(valorCusteioInput.value || 0);
-    const valorCapital = parseFloat(valorCapitalInput.value || 0);
-
-    const soma = (valorCusteio + valorCapital).toFixed(2);
-    const totalPlanejado = valorTotalPlanejado.toFixed(2);
-
-    if (soma === totalPlanejado) {
-        valorCusteioSalvo = valorCusteio;
-        valorCapitalSalvo = valorCapital;
-        fecharFormulario(planoModal);
-        mostrarOpcoesDePlanejamento();
-    } else {
-        alert('A soma dos valores de Custeio e Capital deve ser igual ao Valor a ser Planejado.');
     }
 });
 
@@ -434,6 +441,41 @@ document.querySelectorAll('.close-btn').forEach(button => {
         }
     });
 });
+
+// *******************************************************************
+// CORREÇÃO DO PROBLEMA DO BOTÃO SALVAR PLANO (Precisão Decimal)
+// *******************************************************************
+btnSalvarPlano.addEventListener('click', () => {
+    // Pega os valores como números (ou 0 se for vazio/inválido)
+    const valorCusteio = parseFloat(valorCusteioInput.value || 0);
+    const valorCapital = parseFloat(valorCapitalInput.value || 0);
+
+    // 1. Calcula a soma e formata para string com 2 decimais
+    const somaFormatada = (valorCusteio + valorCapital).toFixed(2);
+    const totalPlanejadoFormatado = valorTotalPlanejado.toFixed(2);
+    
+    // 2. CORREÇÃO: Converte as strings formatadas de volta para Float para comparação.
+    // Isso mitiga a falha de precisão de ponto flutuante do JavaScript (0.1 + 0.2 != 0.3)
+    const somaParaComparacao = parseFloat(somaFormatada);
+    const totalParaComparacao = parseFloat(totalPlanejadoFormatado);
+
+    // O teste passa a ser feito com os valores de ponto flutuante corrigidos.
+    if (somaParaComparacao === totalParaComparacao) {
+        valorCusteioSalvo = valorCusteio;
+        valorCapitalSalvo = valorCapital;
+        fecharFormulario(planoModal);
+        mostrarOpcoesDePlanejamento();
+    } else {
+        alert('A soma dos valores de Custeio e Capital deve ser igual ao Valor a ser Planejado. Por favor, verifique os centavos.');
+    }
+});
+// *******************************************************************
+
+btnCancelarPlano.addEventListener('click', () => {
+    fecharFormulario(planoModal);
+    abrirFormulario(matriculasModal);
+});
+
 
 // ==========================
 // FUNÇÕES DE PLANEJAMENTO E GERAÇÃO DE PDF
@@ -649,7 +691,67 @@ function verificarPlanoCompleto() {
     }
 }
 
-// NOVO: Função para resetar apenas os dados dos planos
+
+// ==========================================================
+// FUNÇÃO DE ENVIO DE DADOS PARA O GOOGLE SHEETS
+// ==========================================================
+
+// NOVA FUNÇÃO: Envia dados para o Google Sheets (Para evitar duplicação, ela atualiza o registro existente)
+async function enviarDadosParaSheet() {
+    // Reúne todos os dados relevantes do estado do sistema em um objeto
+    const dataToSend = {
+        municipioAtual,
+        prefeitoAtual,
+        cnpjAtual,
+        valorTotalPlanejado,
+        valorCusteioSalvo,
+        valorCapitalSalvo,
+        matriculasSalvas, // Inclui a lista de escolas e matrículas
+        planoCusteio,     // Inclui os detalhes do plano de custeio
+        planoCapital      // Inclui os detalhes do plano de capital
+    };
+
+    // Altera o cursor para 'espera' para indicar que algo está acontecendo
+    document.body.style.cursor = 'wait'; 
+    
+    try {
+        const response = await fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'cors', // Necessário para requisições cross-origin (de GitHub para Google)
+            cache: 'no-cache',
+            // Apps Script usa Content-Type: 'text/plain'
+            headers: {
+                'Content-Type': 'text/plain;charset=utf-8', 
+            },
+            // Converte o objeto de dados para uma string JSON
+            body: JSON.stringify(dataToSend) 
+        });
+
+        const result = await response.json(); 
+
+        if (result.result === 'success') {
+            console.log('Dados salvos no Google Sheets:', result.message);
+            alert('PDFs gerados e dados salvos/atualizados na Planilha de Controle!'); 
+        } else {
+            console.error('Erro ao salvar dados:', result.message);
+            alert('PDFs gerados, mas houve um erro ao salvar os dados no Sheets. Verifique o Console (F12).');
+        }
+
+    } catch (error) {
+        console.error('Erro de conexão ou rede:', error);
+        alert('PDFs gerados, mas houve um erro de conexão ao tentar salvar os dados. Verifique o Console (F12).');
+    } finally {
+        // Volta o cursor ao normal
+        document.body.style.cursor = 'default'; 
+    }
+}
+
+// ==========================================================
+// FIM DO CÓDIGO DE ENVIO DE DADOS
+// ==========================================================
+
+
+// NOVO: Função para resetar apenas os planos
 function resetarApenasPlanos() {
     valorCusteioSalvo = 0;
     valorCapitalSalvo = 0;
@@ -688,12 +790,16 @@ btnResetarPlano.addEventListener('click', () => {
 });
 
 // ==========================================
-// FUNÇÕES DE GERAÇÃO DE PDF
+// FUNÇÕES DE GERAÇÃO DE PDF E ENVIO DE DADOS
 // ==========================================
 
 btnGerarPDF.addEventListener('click', () => {
+    // 1. Gera o PDF do Plano
     gerarPlanoAplicacaoPDF();
+    // 2. Gera o PDF de Matrículas
     gerarMatriculasPDF();
+    // 3. NOVO: Envia os dados para a planilha
+    enviarDadosParaSheet(); 
 });
 
 // FUNÇÃO PARA GERAR O PDF DO PLANO DE APLICAÇÃO

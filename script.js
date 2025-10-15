@@ -64,7 +64,7 @@ let valorCusteioSalvo = 0;
 let valorCapitalSalvo = 0;
 let planoCusteio = [];
 let planoCapital = [];
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz2ifzzgRxuuIb1kR79-fPf9ogLTqVphM7qsEhC0s9Xb-jgVP3whLrN3w0Qqro_0cyQ/exec';
+const APPS_SCRIPT_URL = 'google.com/macros/s/AKfycbz2ifzzgRxuuIb1kR79-fPf9ogLTqVphM7qsEhC0s9Xb-jgVP3whLrN3w0Qqro_0cyQ/exec';
 const VALOR_POR_MATRICULA = 3000;
 
 // Objeto com o limite de matrículas por município
@@ -1098,4 +1098,5 @@ document.addEventListener('DOMContentLoaded', () => {
     recomecarDoInicio(); // Limpa o estado e chama mostrarTela(telaInicial)
     verificarPlanoCompleto(); 
 });
+
 

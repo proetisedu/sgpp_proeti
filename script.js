@@ -5,13 +5,10 @@ const telaInicial = document.getElementById('tela-inicial');
 const telaGerenciamento = document.getElementById('tela-gerenciamento');
 const subTelaEdital = document.getElementById('sub-tela-edital');
 const subTelaPlanejamento = document.getElementById('sub-tela-planejamento');
-// Elementos de tela de planejamento (Custeio e Capital)
-const telaPlanejamentoCusteio = document.getElementById('tela-planejamento-custeio');
-const telaPlanejamentoCapital = document.getElementById('tela-planejamento-capital');
-
 
 const btnCriarPlano = document.getElementById('btn-criar-plano');
 const btnHome = document.getElementById('btn-home');
+// const btnHomePlanejamento = document.getElementById('btn-home-planejamento'); // REMOVIDO
 const btnIniciarEdital = document.getElementById('btn-iniciar-edital');
 
 const formModal = document.getElementById('form-modal');
@@ -37,7 +34,8 @@ const btnCancelarPlano = document.getElementById('btn-cancelar-plano');
 const opcoesBotoesDiv = document.getElementById('opcoes-botoes');
 const btnGerarPDF = document.getElementById('btn-gerar-pdf');
 
-
+const telaPlanejamentoCusteio = document.getElementById('tela-planejamento-custeio');
+const telaPlanejamentoCapital = document.getElementById('tela-planejamento-capital');
 const valorCusteioTotalSpan = document.getElementById('valor-custeio-total');
 const valorCusteioRestanteSpan = document.getElementById('valor-custeio-restante');
 const valorCapitalTotalSpan = document.getElementById('valor-capital-total');
@@ -50,6 +48,7 @@ const btnVoltarCusteio = document.getElementById('btn-voltar-custeio');
 const btnVoltarCapital = document.getElementById('btn-voltar-capital');
 
 const btnRecomecar = document.getElementById('btn-recomecar');
+// NOVO: Botão de resetar apenas os planos
 const btnResetarPlano = document.getElementById('btn-resetar-plano');
 
 // ==========================
@@ -64,7 +63,8 @@ let valorCusteioSalvo = 0;
 let valorCapitalSalvo = 0;
 let planoCusteio = [];
 let planoCapital = [];
-const APPS_SCRIPT_URL = 'google.com/macros/s/AKfycbz2ifzzgRxuuIb1kR79-fPf9ogLTqVphM7qsEhC0s9Xb-jgVP3whLrN3w0Qqro_0cyQ/exec';
+// NOVO: URL do Apps Script que vai receber os dados - ATUALIZE ESTA URL
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz2if0zgRxuuIb1kR79-fPf9ogLTqVphM7qsEhC0s9Xb-jgVP3whLrN3w0Qqro_0cyQ/exec';
 const VALOR_POR_MATRICULA = 3000;
 
 // Objeto com o limite de matrículas por município
@@ -113,6 +113,7 @@ const limiteMatriculas = {
     "VILA VALERIO": 92,
     "VILA VELHA": 310,
     "VITORIA": 360
+
 };
 
 
@@ -246,7 +247,7 @@ function carregarEscolas(nomeMunicipio = null) {
 
     selectEscola.innerHTML = '<option value="">Selecione a escola</option>';
     if (municipioSelecionado) {
-        // Filtra escolas já inseridas (evitar duplicidade)
+        // CORREÇÃO ANTERIOR (Problema 1): Filtrar escolas já inseridas (evitar duplicidade)
         const escolasSalvasNomes = matriculasSalvas.map(item => item.escola);
         
         const escolasDisponiveis = municipioSelecionado.escolas.filter(escola => 
@@ -282,34 +283,6 @@ function exibirMatriculasSalvas() {
 }
 
 // ==========================
-// FUNÇÕES DE FLUXO E RESET
-// ==========================
-
-// NOVO: Função para resetar apenas os planos
-function resetarApenasPlanos() {
-    valorCusteioSalvo = 0;
-    valorCapitalSalvo = 0;
-    planoCusteio = [];
-    planoCapital = [];
-    btnGerarPDF.disabled = true;
-    // CORRIGIDO: Não abre o modal do plano ao resetar, apenas se o fluxo exigir.
-    mostrarTela(subTelaPlanejamento);
-    valorPlanejadoSpan.textContent = formatoMoeda.format(valorTotalPlanejado);
-}
-
-// Função para resetar todos os dados e voltar para o início
-function recomecarDoInicio() {
-    municipioAtual = '';
-    prefeitoAtual = '';
-    cnpjAtual = '';
-    matriculasSalvas = [];
-    valorTotalPlanejado = 0;
-    resetarApenasPlanos(); // Chama a função para limpar os planos e valores
-    exibirMatriculasSalvas();
-    mostrarTela(telaInicial);
-}
-
-// ==========================
 // LISTENERS DE BOTÕES E EVENTOS
 // ==========================
 btnCriarPlano.addEventListener('click', () => {
@@ -319,23 +292,6 @@ btnCriarPlano.addEventListener('click', () => {
 btnHome.addEventListener('click', () => {
     mostrarTelaInicial();
 });
-
-// Listener para o botão de recomeçar
-btnRecomecar.addEventListener('click', () => {
-    if (confirm("Você tem certeza que deseja começar novamente? Todos os dados (município, escolas e planos) serão perdidos.")) {
-        recomecarDoInicio();
-    }
-});
-
-// Listener para o botão de resetar apenas os planos
-btnResetarPlano.addEventListener('click', () => {
-    if (confirm("Você tem certeza que deseja resetar apenas os planos de Custeio e Capital?")) {
-        resetarApenasPlanos();
-        // Garante que o modal do plano é reaberto para re-planejamento, já que o usuário está na tela de planejamento
-        abrirFormulario(planoModal); 
-    }
-});
-
 
 btnIniciarEdital.addEventListener('click', () => {
     if (!municipioAtual || !prefeitoAtual) {
@@ -383,7 +339,7 @@ btnInserirEscola.addEventListener('click', () => {
     const quantidadeMatriculasStr = document.getElementById('quantidade-matriculas').value; 
     const quantidadeMatriculas = parseInt(quantidadeMatriculasStr);
 
-    // Permite 0, mas verifica se não é string vazia e se é >= 0
+    // CORREÇÃO ANTERIOR (Problema 3): Permite 0, mas verifica se não é string vazia e se é >= 0
     if (escolaSelecionada && quantidadeMatriculasStr !== '' && quantidadeMatriculas >= 0) {
         
         const dadosEscola = {
@@ -395,7 +351,7 @@ btnInserirEscola.addEventListener('click', () => {
         document.getElementById('quantidade-matriculas').value = '';
         exibirMatriculasSalvas();
         
-        // Recarrega a lista para remover a escola inserida
+        // CORREÇÃO ANTERIOR (Problema 1): Recarrega a lista para remover a escola inserida
         carregarEscolas(municipioAtual); 
     } else {
         alert('Por favor, selecione uma escola e digite uma quantidade de matrículas válida (0 ou mais).');
@@ -417,7 +373,7 @@ btnExcluirEscola.addEventListener('click', () => {
         matriculasSalvas.splice(index, 1);
         exibirMatriculasSalvas();
         
-        // Recarrega a lista para adicionar a escola de volta ao select
+        // CORREÇÃO ANTERIOR (Problema 1): Recarrega a lista para adicionar a escola de volta ao select
         carregarEscolas(municipioAtual); 
     } else {
         alert('Por favor, selecione um item da lista para excluir.');
@@ -433,7 +389,7 @@ btnSalvarTudo.addEventListener('click', () => {
     const municipioInfo = municipiosData.find(m => m.nome === municipioAtual);
     const totalEscolasMunicipio = municipioInfo ? municipioInfo.escolas.length : 0;
 
-    // Checagem se todas as escolas foram preenchidas
+    // CORREÇÃO ANTERIOR (Problema 2): Checagem se todas as escolas foram preenchidas
     if (matriculasSalvas.length !== totalEscolasMunicipio) {
         alert(`Você deve preencher as matrículas para TODAS as ${totalEscolasMunicipio} escolas do município. Você preencheu apenas ${matriculasSalvas.length}.`);
         return; // Sai da função se a checagem falhar
@@ -455,32 +411,21 @@ btnSalvarTudo.addEventListener('click', () => {
         const valorTotal = matriculasParaCalculo * VALOR_POR_MATRICULA;
 
         fecharFormulario(matriculasModal);
+        abrirFormulario(planoModal);
         valorTotalPlanejado = valorTotal;
+        valorPlanejadoSpan.textContent = formatoMoeda.format(valorTotalPlanejado);
+        valorCusteioInput.value = '';
+        valorCapitalInput.value = '';
         
-        // LÓGICA PARA VALOR TOTAL ZERO:
         if (valorTotal === 0) {
-            // Se o valor total for 0, pula o modal do plano e prepara para gerar PDF
-            
-            // 1. Zera os valores salvos e os planos (se não estiverem zerados)
+            valorCusteioInput.value = 0;
+            valorCapitalInput.value = 0;
             valorCusteioSalvo = 0;
             valorCapitalSalvo = 0;
             planoCusteio = [];
             planoCapital = [];
-
-            // 2. Garante que a tela de planejamento é mostrada
-            mostrarOpcoesDePlanejamento(); 
-
-            // 3. Habilita o botão de PDF imediatamente (já que o plano é nulo/zero)
-            btnGerarPDF.disabled = false;
-            
-            alert("O valor a ser planejado é R$ 0,00. Prossiga para gerar o PDF da informação das matrículas.");
-
-        } else {
-            // Se o valor for maior que zero, segue o fluxo normal: abre o modal para detalhamento do plano
-            abrirFormulario(planoModal);
-            valorPlanejadoSpan.textContent = formatoMoeda.format(valorTotalPlanejado);
-            valorCusteioInput.value = '';
-            valorCapitalInput.value = '';
+            fecharFormulario(planoModal);
+            mostrarOpcoesDePlanejamento();
         }
 
     } else {
@@ -498,7 +443,9 @@ document.querySelectorAll('.close-btn').forEach(button => {
     });
 });
 
-// Salvar Plano
+// *******************************************************************
+// CORREÇÃO DO PROBLEMA DO BOTÃO SALVAR PLANO (Precisão Decimal)
+// *******************************************************************
 btnSalvarPlano.addEventListener('click', () => {
     // Pega os valores como números (ou 0 se for vazio/inválido)
     const valorCusteio = parseFloat(valorCusteioInput.value || 0);
@@ -509,6 +456,7 @@ btnSalvarPlano.addEventListener('click', () => {
     const totalPlanejadoFormatado = valorTotalPlanejado.toFixed(2);
     
     // 2. CORREÇÃO: Converte as strings formatadas de volta para Float para comparação.
+    // Isso mitiga a falha de precisão de ponto flutuante do JavaScript (0.1 + 0.2 != 0.3)
     const somaParaComparacao = parseFloat(somaFormatada);
     const totalParaComparacao = parseFloat(totalPlanejadoFormatado);
 
@@ -522,6 +470,7 @@ btnSalvarPlano.addEventListener('click', () => {
         alert('A soma dos valores de Custeio e Capital deve ser igual ao Valor a ser Planejado. Por favor, verifique os centavos.');
     }
 });
+// *******************************************************************
 
 btnCancelarPlano.addEventListener('click', () => {
     fecharFormulario(planoModal);
@@ -534,26 +483,20 @@ btnCancelarPlano.addEventListener('click', () => {
 // ==========================
 function mostrarOpcoesDePlanejamento() {
     opcoesBotoesDiv.innerHTML = '';
-    
-    // Se não há valor a ser planejado, não mostra botões de planejamento, 
-    // mas mostra a tela para o botão de PDF.
-    if (valorTotalPlanejado > 0) {
-        if (valorCusteioSalvo > 0) {
-            const btnCusteio = document.createElement('button');
-            btnCusteio.className = 'btn btn-primary';
-            btnCusteio.textContent = 'Planejar Custeio';
-            btnCusteio.addEventListener('click', abrirTelaPlanejamentoCusteio);
-            opcoesBotoesDiv.appendChild(btnCusteio);
-        }
-        if (valorCapitalSalvo > 0) {
-            const btnCapital = document.createElement('button');
-            btnCapital.className = 'btn btn-primary';
-            btnCapital.textContent = 'Planejar Capital';
-            btnCapital.addEventListener('click', abrirTelaPlanejamentoCapital);
-            opcoesBotoesDiv.appendChild(btnCapital);
-        }
+    if (valorCusteioSalvo > 0) {
+        const btnCusteio = document.createElement('button');
+        btnCusteio.className = 'btn btn-primary';
+        btnCusteio.textContent = 'Planejar Custeio';
+        btnCusteio.addEventListener('click', abrirTelaPlanejamentoCusteio);
+        opcoesBotoesDiv.appendChild(btnCusteio);
     }
-    
+    if (valorCapitalSalvo > 0) {
+        const btnCapital = document.createElement('button');
+        btnCapital.className = 'btn btn-primary';
+        btnCapital.textContent = 'Planejar Capital';
+        btnCapital.addEventListener('click', abrirTelaPlanejamentoCapital);
+        opcoesBotoesDiv.appendChild(btnCapital);
+    }
     mostrarTela(subTelaPlanejamento);
 }
 
@@ -736,12 +679,6 @@ btnSalvarCapital.addEventListener('click', () => {
 });
 
 function verificarPlanoCompleto() {
-    // Se o valor total planejado é 0, o plano está sempre completo
-    if (valorTotalPlanejado === 0) {
-        btnGerarPDF.disabled = false;
-        return;
-    }
-    
     const somaCusteio = planoCusteio.reduce((soma, item) => soma + item.valor, 0);
     const somaCapital = planoCapital.reduce((soma, item) => soma + item.valor, 0);
 
@@ -760,6 +697,7 @@ function verificarPlanoCompleto() {
 // FUNÇÃO DE ENVIO DE DADOS PARA O GOOGLE SHEETS
 // ==========================================================
 
+// NOVA FUNÇÃO: Envia dados para o Google Sheets (Para evitar duplicação, ela atualiza o registro existente)
 async function enviarDadosParaSheet() {
     // Reúne todos os dados relevantes do estado do sistema em um objeto
     const dataToSend = {
@@ -770,8 +708,8 @@ async function enviarDadosParaSheet() {
         valorCusteioSalvo,
         valorCapitalSalvo,
         matriculasSalvas, // Inclui a lista de escolas e matrículas
-        planoCusteio,      // Inclui os detalhes do plano de custeio
-        planoCapital       // Inclui os detalhes do plano de capital
+        planoCusteio,     // Inclui os detalhes do plano de custeio
+        planoCapital      // Inclui os detalhes do plano de capital
     };
 
     // Altera o cursor para 'espera' para indicar que algo está acontecendo
@@ -809,6 +747,48 @@ async function enviarDadosParaSheet() {
     }
 }
 
+// ==========================================================
+// FIM DO CÓDIGO DE ENVIO DE DADOS
+// ==========================================================
+
+
+// NOVO: Função para resetar apenas os planos
+function resetarApenasPlanos() {
+    valorCusteioSalvo = 0;
+    valorCapitalSalvo = 0;
+    planoCusteio = [];
+    planoCapital = [];
+    btnGerarPDF.disabled = true;
+    mostrarTela(subTelaPlanejamento);
+    abrirFormulario(planoModal);
+    valorPlanejadoSpan.textContent = formatoMoeda.format(valorTotalPlanejado);
+}
+
+// Função para resetar todos os dados e voltar para o início
+function recomecarDoInicio() {
+    municipioAtual = '';
+    prefeitoAtual = '';
+    cnpjAtual = '';
+    matriculasSalvas = [];
+    valorTotalPlanejado = 0;
+    resetarApenasPlanos(); // Chama a função para limpar os planos e valores
+    exibirMatriculasSalvas();
+    mostrarTela(telaInicial);
+}
+
+// NOVO: Listener para o botão de recomeçar
+btnRecomecar.addEventListener('click', () => {
+    if (confirm("Você tem certeza que deseja começar novamente? Todos os dados (município, escolas e planos) serão perdidos.")) {
+        recomecarDoInicio();
+    }
+});
+
+// NOVO: Listener para o botão de resetar apenas os planos
+btnResetarPlano.addEventListener('click', () => {
+    if (confirm("Você tem certeza que deseja resetar apenas os planos de Custeio e Capital?")) {
+        resetarApenasPlanos();
+    }
+});
 
 // ==========================================
 // FUNÇÕES DE GERAÇÃO DE PDF E ENVIO DE DADOS
@@ -1087,17 +1067,3 @@ function gerarMatriculasPDF() {
     
     doc.save(`Informacao Matriculas - ${municipioAtual}.pdf`);
 }
-
-// ==========================
-// INICIALIZAÇÃO
-// ==========================
-document.addEventListener('DOMContentLoaded', () => {
-    carregarMunicipios();
-    // Chamada correta para iniciar o fluxo e garantir que a telaInicial está visível
-    mostrarTela(telaInicial); 
-    recomecarDoInicio(); // Limpa o estado e chama mostrarTela(telaInicial)
-    verificarPlanoCompleto(); 
-});
-
-
-

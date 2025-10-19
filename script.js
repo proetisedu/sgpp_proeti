@@ -85,7 +85,7 @@ const limiteMatriculas = {
     "GUACUI": 50,
     "GUARAPARI": 420,
     "IBATIBA": 275,
-    "IBIRACU": 76,
+    "IBIRACU": 0,
     "IRUPI": 151,
     "ITAGUACU": 110,
     "ITAPEMIRIM": 479,
@@ -1067,3 +1067,4 @@ function gerarMatriculasPDF() {
     
     doc.save(`Informacao Matriculas - ${municipioAtual}.pdf`);
 }
+

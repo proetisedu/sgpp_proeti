@@ -172,7 +172,7 @@ const municipiosData = [
     { nome: "VILA PAVAO", cnpj: "30.063.386/0001-41", escolas: ["EMEF Professora Esther da Costa Santos"] },
     { nome: "VILA VALERIO", cnpj: "01.619.232/0001-95", escolas: ["EMEF Arariboia"] },
     { nome: "VILA VELHA", cnpj: "27.165.554/0001-03", escolas: ["UMEF PROFESSOR RUBENS JOSE VERVLOET GOMES", "UMEFTI EZEQUIEL LEAL", "UMEF JOSE ELIAS DE QUEIROZ", "UMEF MACIONÍLIA MAURÍCIO BUENO"] },
-    { nome: "VITORIA", cnpj: "27.142.058/0009-83", escolas: ["EMEF JOSE LEMOS DE MIRANDA", "EMEFTI ANACLETA SCHNEIDER LUCAS", "EMEFTI MOACYR AVIDOS", "EMEFTI PROFESSORA EUNICE PEREIRA SILVEIRA", "EMEF TI PAULO REGLUS NEVES FREIRE", "EMEFTI Edna de Mattos Siqueira Gaudio", "EMEF IZAURA MARQUES DA SILVA"] }
+    { nome: "VITORIA", cnpj: "27.142.058/0009-83", escolas: ["EMEF JOSE LEMOS DE MIRANDA", "EMEFTI ANACLETA SCHNEIDER LUCAS", "EMEFTI MOACYR AVIDOS", "EMEFTI PROFESSORA EUNICE PEREIRA SILVEIRA", "EMEF TI PAULO REGLUS NEVES FREIRE", "EMEFTI Edna de Mattos Siqueira Gaudio", "EMEFTI José Aureo Monjardim","EMEF IZAURA MARQUES DA SILVA"] }
 ];
 
 const despesasCusteio = [
@@ -1067,4 +1067,5 @@ function gerarMatriculasPDF() {
     
     doc.save(`Informacao Matriculas - ${municipioAtual}.pdf`);
 }
+
 
